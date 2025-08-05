@@ -1,31 +1,41 @@
-import pandas as pd
-import glob
+import csv
 import os
 
-# Step 1: Load all CSV files from data/ folder
-csv_files = glob.glob(os.path.join('data', '*.csv'))
+DATA_DIRECTORY = "./data"
+OUTPUT_FILE_PATH = "./formatted_data.csv"
 
-# Step 2: Read and process each CSV
-data_frames = []
+# open the output file
+with open(OUTPUT_FILE_PATH, "w") as output_file:
+    writer = csv.writer(output_file)
 
-for file in csv_files:
-    df = pd.read_csv(file)
-    
-    # Step 3: Filter for Pink Morsel
-    df = df[df['product'] == 'pink morsel']
-    
-    # Step 4: Calculate 'sales' column
-    df['sales'] = df['quantity'] * df['price']
-    
-    # Step 5: Keep only 'sales', 'date', 'region'
-    df = df[['sales', 'date', 'region']]
-    
-    data_frames.append(df)
+    # add a csv header
+    header = ["sales", "date", "region"]
+    writer.writerow(header)
 
-# Step 6: Combine all into one DataFrame
-combined_df = pd.concat(data_frames)
+    # iterate through all files in the data directory
+    for file_name in os.listdir(DATA_DIRECTORY):
+        # open the csv file for reading
+        with open(f"{DATA_DIRECTORY}/{file_name}", "r") as input_file:
+            reader = csv.reader(input_file)
+            # iterate through each row in the csv file
+            row_index = 0
+            for input_row in reader:
+                # if this row is not the csv header, process it
+                if row_index > 0:
+                    # collect data from row
+                    product = input_row[0]
+                    raw_price = input_row[1]
+                    quantity = input_row[2]
+                    transaction_date = input_row[3]
+                    region = input_row[4]
 
-# Step 7: Export to CSV
-combined_df.to_csv('processed_data.csv', index=False)
+                    # if this is a pink morsel transaction, process it
+                    if product == "pink morsel":
+                        # finish formatting data
+                        price = float(raw_price[1:])
+                        sale = price * int(quantity)
 
-print("✅ Data processed and saved to processed_data.csv")
+                        # write the row to output file
+                        output_row = [sale, transaction_date, region]
+                        writer.writerow(output_row)
+                row_index += 1
